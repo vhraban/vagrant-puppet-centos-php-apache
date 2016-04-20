@@ -14,20 +14,6 @@ class { 'concat::setup':
 class { 'wget': 
 	stage => pre
 }
-# NodeJS
-class { 'nodejs':
-  version => 'stable',
-  stage => pre,
-}
-package { 'grunt-cli':
-  provider => npm,
-}
-package { 'nodemon':
-  provider => npm,
-}
-package { 'jshint':
-  provider => npm,
-}
 
 # Edit local /etc/hosts files to resolve some hostnames used on your application.
 host { 'localhost.localdomain':
@@ -80,17 +66,79 @@ apache::vhost { 'centos.local':
     options         => 'FollowSymLinks MultiViews',
 }
 
-# PHP
-php::ini {
-	'/etc/php.ini':
-        display_errors	=> 'On',
-        short_open_tag	=> 'Off',
-        memory_limit	=> '256M',
-        date_timezone	=> 'Europe/Minsk'
+apache::vhost { 'symfonydemo.local':
+    priority        => '1',
+    port            => '80',
+    serveraliases   => ['www.symfonydemo.local',],
+  docroot         => '/mnt/projects/symfony_demo/web',
+    docroot_owner => 'vagrant',
+    docroot_group => 'vagrant',
+  logroot         => '/logs/httpd',
+    options         => 'FollowSymLinks MultiViews',
+    override      => "All"
 }
-include php::cli
-include php::mod_php5
-php::module { [ 'devel', 'pgsql', 'intl', 'mbstring', 'xml', 'gd', 'opcache', 'tidy', 'pecl-memcache', 'pecl-imagick', 'pecl-redis', 'pecl-amqp', 'pecl-event']: }
+
+apache::vhost { 'advice.local':
+    priority        => '1',
+    port            => '443',
+    serveraliases   => ['www.advice.dev',],
+  docroot         => '/mnt/projects/vice/advice/public',
+    docroot_owner => 'vagrant',
+    docroot_group => 'vagrant',
+  logroot         => '/logs/httpd',
+    options         => 'FollowSymLinks MultiViews',
+    override      => "All"
+}
+
+# PHP
+class { 'yum':
+  extrarepo => [ 'webtatic'],
+}
+
+package { 'php56w' :
+  ensure => 'present',
+  require => Yumrepo['webtatic'],
+}
+
+package { 'php56w-mysql' :
+  ensure => 'present',
+  require => [
+              Package['php56w'],
+              Yumrepo['webtatic'],
+              ],
+}
+
+package { 'php56w-pdo' :
+  ensure => 'present',
+  require => [
+              Package['php56w'],
+              Yumrepo['webtatic'],
+            ]
+}
+
+package { 'php56w-mbstring' :
+  ensure => 'present',
+  require => [
+              Package['php56w'],
+              Yumrepo['webtatic'],
+            ]
+}
+
+package { 'php56w-mcrypt' :
+  ensure => 'present',
+  require => [
+              Package['php56w'],
+              Yumrepo['webtatic'],
+            ]
+}
+
+package { 'nodejs' :
+  ensure => 'present',
+}
+
+package { 'npm' :
+  ensure => 'present',
+}
 
 # MySQL
 class { '::mysql::server':
@@ -98,49 +146,11 @@ class { '::mysql::server':
   override_options => { 'mysqld' => { 'max_connections' => '1024' } }
 }
 
-# Redis
-class { 'redis': }
-
-# RabbitMQ
-class { 'rabbitmq':
-  port              => '5672',
-  environment_variables   => {
-    'RABBITMQ_NODENAME'     => 'node01',
-    'RABBITMQ_SERVICENAME'  => 'RabbitMQ'
-  },
-}
 
 # MongoDb
 class {'::mongodb::server': }
-
-# Pipe Viewer
-package { "pv":
-    ensure => "installed",
-}
 
 # Git
 package { "git":
     ensure => "installed",
 }
-
-# ImageMagick
-package { "ImageMagick":
-    ensure => "installed",
-}
-
-# LibEvent
-package { "libevent-last-devel":
-    ensure => "installed",
-}
-
-# PHPUnit
-class { 'phpunit': }
-
-# PHPMyAdmin
-class { 'phpmyadmin': }
-
-# Pear
-class { "pear": }
-
-# PHP CodeSniffer
-pear::package { "PHP_CodeSniffer": }

@@ -13,6 +13,8 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "centos64-64"
   config.vm.box_url = "http://developer.nrel.gov/downloads/vagrant-boxes/CentOS-6.4-x86_64-v20131103.box"
 
+  config.hostsupdater.aliases = ["centos.local", "symfonydemo.local", "advice.dev"]
+
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
   # `vagrant box outdated`. This is not recommended.
@@ -48,6 +50,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.synced_folder "../data", "/vagrant_data"
   config.vm.synced_folder "./shared/www", "/www", :mount_options => ["dmode=777", "fmode=777"]
   config.vm.synced_folder "./shared/logs", "/logs", :mount_options => ["dmode=777", "fmode=777"]
+  config.vm.synced_folder "./..", "/mnt/projects", :mount_options => ["dmode=777", "fmode=777"]
 
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
@@ -79,6 +82,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # config.vm.provision "cfengine" do |cf|
   #   cf.policy_server_address = "10.0.2.15"
   # end
+
+
+   config.vm.provision "shell", inline: "puppet module install example42-yum --force"
+   config.vm.provision "shell", inline: "puppet module install example42-puppi --force"
+
 
   # Enable provisioning with Puppet stand alone.  Puppet manifests
   # are contained in a directory path relative to this Vagrantfile.
